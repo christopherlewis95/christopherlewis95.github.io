@@ -1,36 +1,25 @@
 /*
-	Solid State by HTML5 UP
+	Read Only by HTML5 UP
 	html5up.net | @ajlkn
 	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
 */
 
 (function($) {
 
-	"use strict";
-
 	skel.breakpoints({
-		xlarge:	'(max-width: 1680px)',
-		large:	'(max-width: 1280px)',
-		medium:	'(max-width: 980px)',
-		small:	'(max-width: 736px)',
-		xsmall:	'(max-width: 480px)'
+		xlarge: '(max-width: 1680px)',
+		large: '(max-width: 1280px)',
+		medium: '(max-width: 1024px)',
+		small: '(max-width: 736px)',
+		xsmall: '(max-width: 480px)'
 	});
 
 	$(function() {
 
-		var	$window = $(window),
-			$body = $('body'),
+		var $body = $('body'),
 			$header = $('#header'),
-			$banner = $('#banner');
-
-		// Disable animations/transitions until the page has loaded.
-			$body.addClass('is-loading');
-
-			$window.on('load', function() {
-				window.setTimeout(function() {
-					$body.removeClass('is-loading');
-				}, 100);
-			});
+			$nav = $('#nav'), $nav_a = $nav.find('a'),
+			$wrapper = $('#wrapper');
 
 		// Fix: Placeholder polyfill.
 			$('form').placeholder();
@@ -44,122 +33,80 @@
 			});
 
 		// Header.
-			if (skel.vars.IEVersion < 9)
-				$header.removeClass('alt');
+			var ids = [];
 
-			if ($banner.length > 0
-			&&	$header.hasClass('alt')) {
-
-				$window.on('resize', function() { $window.trigger('scroll'); });
-
-				$banner.scrollex({
-					bottom:		$header.outerHeight(),
-					terminate:	function() { $header.removeClass('alt'); },
-					enter:		function() { $header.addClass('alt'); },
-					leave:		function() { $header.removeClass('alt'); }
-				});
-
-			}
-
-		// Menu.
-			var $menu = $('#menu');
-
-			$menu._locked = false;
-
-			$menu._lock = function() {
-
-				if ($menu._locked)
-					return false;
-
-				$menu._locked = true;
-
-				window.setTimeout(function() {
-					$menu._locked = false;
-				}, 350);
-
-				return true;
-
-			};
-
-			$menu._show = function() {
-
-				if ($menu._lock())
-					$body.addClass('is-menu-visible');
-
-			};
-
-			$menu._hide = function() {
-
-				if ($menu._lock())
-					$body.removeClass('is-menu-visible');
-
-			};
-
-			$menu._toggle = function() {
-
-				if ($menu._lock())
-					$body.toggleClass('is-menu-visible');
-
-			};
-
-			$menu
-				.appendTo($body)
-				.on('click', function(event) {
-
-					event.stopPropagation();
-
-					// Hide.
-						$menu._hide();
-
-				})
-				.find('.inner')
-					.on('click', '.close', function(event) {
-
-						event.preventDefault();
-						event.stopPropagation();
-						event.stopImmediatePropagation();
-
-						// Hide.
-							$menu._hide();
-
-					})
+			// Set up nav items.
+				$nav_a
+					.scrolly({ offset: 44 })
 					.on('click', function(event) {
-						event.stopPropagation();
+
+						var $this = $(this),
+							href = $this.attr('href');
+
+						// Not an internal link? Bail.
+							if (href.charAt(0) != '#')
+								return;
+
+						// Prevent default behavior.
+							event.preventDefault();
+
+						// Remove active class from all links and mark them as locked (so scrollzer leaves them alone).
+							$nav_a
+								.removeClass('active')
+								.addClass('scrollzer-locked');
+
+						// Set active class on this link.
+							$this.addClass('active');
+
 					})
-					.on('click', 'a', function(event) {
+					.each(function() {
 
-						var href = $(this).attr('href');
+						var $this = $(this),
+							href = $this.attr('href'),
+							id;
 
-						event.preventDefault();
-						event.stopPropagation();
+						// Not an internal link? Bail.
+							if (href.charAt(0) != '#')
+								return;
 
-						// Hide.
-							$menu._hide();
-
-						// Redirect.
-							window.setTimeout(function() {
-								window.location.href = href;
-							}, 350);
+						// Add to scrollzer ID list.
+							id = href.substring(1);
+							$this.attr('id', id + '-link');
+							ids.push(id);
 
 					});
 
-			$body
-				.on('click', 'a[href="#menu"]', function(event) {
+			// Initialize scrollzer.
+				$.scrollzer(ids, { pad: 300, lastHack: true });
 
-					event.stopPropagation();
-					event.preventDefault();
+		// Off-Canvas Navigation.
 
-					// Toggle.
-						$menu._toggle();
+			// Title Bar.
+				$(
+					'<div id="titleBar">' +
+						'<a href="#header" class="toggle"></a>' +
+						'<span class="title">' + $('#logo').html() + '</span>' +
+					'</div>'
+				)
+					.appendTo($body);
 
-				})
-				.on('keydown', function(event) {
+			// Header.
+				$('#header')
+					.panel({
+						delay: 500,
+						hideOnClick: true,
+						hideOnSwipe: true,
+						resetScroll: true,
+						resetForms: true,
+						side: 'right',
+						target: $body,
+						visibleClass: 'header-visible'
+					});
 
-					// Hide on escape.
-						if (event.keyCode == 27)
-							$menu._hide();
-
-				});
+			// Fix: Remove navPanel transitions on WP<10 (poor/buggy performance).
+				if (skel.vars.os == 'wp' && skel.vars.osVersion < 10)
+					$('#titleBar, #header, #wrapper')
+						.css('transition', 'none');
 
 	});
 
